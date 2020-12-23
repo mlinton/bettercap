@@ -40,14 +40,21 @@ func SetInterfaceChannel(iface string, channel int) error {
 	if curr == channel {
 		return nil
 	}
-
-	if core.HasBinary("iw") {
+	if core.HasBinary("nexutil") {
+                Debug("SetInterfaceChannel(%s, %d) nexutil based", iface, channel)
+                out, err := core.Exec("nexutil", []string{"-k", fmt.Sprintf("%d", channel)})
+                if err != nil {
+                        return err
+                } else if out != "" {
+                        return fmt.Errorf("Unexpected output while nexutil setting interface %s to channel %d: %s", iface, channel, out)
+                }
+	} else if core.HasBinary("iw") {
 		Debug("SetInterfaceChannel(%s, %d) iw based", iface, channel)
 		out, err := core.Exec("iw", []string{"dev", iface, "set", "channel", fmt.Sprintf("%d", channel)})
 		if err != nil {
 			return err
 		} else if out != "" {
-			return fmt.Errorf("Unexpected output while setting interface %s to channel %d: %s", iface, channel, out)
+			return fmt.Errorf("Unexpected output while setting iw interface %s to channel %d: %s", iface, channel, out)
 		}
 	} else if core.HasBinary("iwconfig") {
 		Debug("SetInterfaceChannel(%s, %d) iwconfig based")
@@ -55,7 +62,7 @@ func SetInterfaceChannel(iface string, channel int) error {
 		if err != nil {
 			return err
 		} else if out != "" {
-			return fmt.Errorf("Unexpected output while setting interface %s to channel %d: %s", iface, channel, out)
+			return fmt.Errorf("Unexpected output while setting iwconfig interface %s to channel %d: %s", iface, channel, out)
 		}
 	}
 
